@@ -21,3 +21,13 @@ create table if not exists estudantes (
   nome      text not null,
   ano       int  not null check (ano between 1 and 3)
 );
+create table if not exists ofertas (
+  codigo     text primary key,   -- ex.: BASE 01
+  componente text not null,      -- ex.: BASE
+  titulo     text not null,      -- nome da componente
+  descricao  text not null default '',
+  vagas      int  not null check (vagas > 0),
+  anos       int[] not null default '{1,2,3}',  -- anos que podem escolher a oferta
+  ordem      int  not null default 0
+);
+create table if not exists textos (chave text primary key, valor text not null);  -- 'ciclo' = nome do semestre

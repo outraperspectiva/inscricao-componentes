@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#FFFFFF">
-<title>Inscrição em Componentes 27.1</title>
+<title>Inscrição em Componentes</title>
 <link rel="icon" href="/logo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -27,6 +27,7 @@ input{min-height:56px;padding:0 14px;font:700 18px "JetBrains Mono",ui-monospace
 input:focus-visible,button:focus-visible{outline:3px solid var(--or);outline-offset:2px}
 button{font:700 15px Inter,sans-serif;cursor:pointer;border-radius:10px;min-height:52px}
 .btn{width:100%;min-height:56px;color:#fff;border:2px solid #1E3A8A;background:var(--pr)}.btn.o{background:var(--or);border-color:#9A3412}.btn.g{background:#fff;color:var(--tp);border:1.5px solid var(--bd)}
+.btn.r{background:var(--er);border-color:#7F1D1D}.file{display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative}.file input{position:absolute;width:1px;height:1px;opacity:0}
 .btn:disabled{background:#CBD5E1;border-color:var(--bd);color:var(--ts);cursor:not-allowed}
 .seg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}.seg button{background:#fff;border:1.5px solid var(--bd);color:var(--tp)}.seg button.on{background:var(--pr);border-color:#1E3A8A;color:#fff}
 .bar{height:10px;background:#E2E8F0;border:1.5px solid var(--bd);border-radius:9999px;overflow:hidden}.bar i{display:block;height:100%;background:var(--or)}
@@ -34,6 +35,7 @@ footer{position:sticky;bottom:0;background:var(--sf);border-top:1.5px solid var(
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}.grid2 .btn{min-height:48px;font-size:14px;line-height:18px;padding:4px 8px}
 .row{display:flex;justify-content:space-between;align-items:center;gap:8px}
 .err{color:#7F1D1D;background:var(--erb);border:2px solid var(--er);border-radius:10px;padding:10px 14px;font-size:14px}
+ul.lst{margin:6px 0 0;padding-left:20px}ul.lst li{margin:2px 0}
 .okm{color:var(--okt);background:var(--okb);border:2px solid var(--ok);border-radius:10px;padding:10px 14px;font-size:14px}
 .badge{white-space:nowrap;background:var(--okb);border:1.5px solid var(--ok);color:var(--okt);border-radius:9999px;padding:2px 10px;font-size:12px;font-weight:800}
 .badge.w{background:var(--wb);border-color:#B45309;color:var(--wt)}.badge.e{background:var(--erb);border-color:var(--er);color:#7F1D1D}
@@ -45,14 +47,14 @@ footer{position:sticky;bottom:0;background:var(--sf);border-top:1.5px solid var(
 const AV="avaliação",IN="inscrito",EX="excedido";
 const $=id=>document.getElementById(id),A=$("app");
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-const code=(c,i)=>c.k+" "+String(i+1).padStart(2,"0");
-const offs=(c,y)=>c.o.map((d,i)=>[code(c,i),d]).filter(([x])=>!(x==="OFTEC 01"&&y!==1));
-let S={step:"login",p:{}},C=[];
+const offs=(c,y)=>c.o.filter(o=>o.anos.includes(y));
+let S={step:"login",p:{}},C=[],CICLO="";
+function setCiclo(c){if(c){CICLO=c;document.title="Inscrição em Componentes "+c}}
 
 async function api(url,body){
  const r=await fetch(url,body?{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)}:{cache:"no-store"});
  let j={};try{j=await r.json()}catch(e){}
- if(!r.ok){const e=new Error(j.erro||"Sem conexão com o servidor. Tente novamente.");e.status=r.status;throw e}
+ if(!r.ok){const e=new Error(j.erro||(j.erros?"A planilha tem problemas.":"Sem conexão com o servidor. Tente novamente."));e.status=r.status;e.dados=j;throw e}
  return j}
 function baixar(nome,dados,tipo){const u=URL.createObjectURL(new Blob([dados],{type:tipo})),a=document.createElement("a");a.href=u;a.download=nome;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),2000)}
 
@@ -66,7 +68,7 @@ const used=x=>(S.est.usados&&S.est.usados[x])||0;
 let tm,seq=0;
 function login(){
  S={step:"login",p:{}};
- shell("Inscrição 27.1",`<h2>Entrar</h2><div class="sec">Digite sua matrícula.</div><input id="mt" inputmode="numeric" autocomplete="off" placeholder="Matrícula" aria-label="Matrícula"><div id="who"></div>`,`<button class="btn" id="go" disabled>Inscrição</button>`);
+ shell("Inscrição "+esc(CICLO),`<h2>Entrar</h2><div class="sec">Digite sua matrícula.</div><input id="mt" inputmode="numeric" autocomplete="off" placeholder="Matrícula" aria-label="Matrícula"><div id="who"></div>`,`<button class="btn" id="go" disabled>Inscrição</button>`);
  $("mt").focus();
  $("mt").oninput=()=>{clearTimeout(tm);S.est=null;S.co=null;$("go").disabled=true;$("go").textContent="Inscrição";
   const v=$("mt").value.replace(/\D/g,"");$("who").innerHTML="";
@@ -85,6 +87,7 @@ async function buscar(v){
 function entrar(){
  if(S.co){S.co.senha=$("sn").value;return coord("resumo")}
  if(!S.est)return;
+ if(!C.length){$("who").innerHTML='<div class="err">As componentes ainda não foram cadastradas. Procure a coordenação.</div>';return}
  if(Object.keys(S.est.c).length){S.step="st";render()}else wiz(C.map(c=>c.k))}
 
 // ---------- Estudante ----------
@@ -92,14 +95,14 @@ function wiz(n){S.need=n;S.i=0;S.p={};S.step="w";S.msg="";render();scrollTo(0,0)
 function render(){
  const E=S.est,y=E.y;
  if(S.step==="w"){
-  const k=S.need[S.i],c=C.find(x=>x.k===k),of=offs(c,y).filter(([x])=>used(x)<c.q),p=S.p[k]=S.p[k]||[],mn=Math.min(3,of.length),n=p.filter(Boolean).length,ok=mn>0&&n>=mn,last=S.i===S.need.length-1;
-  shell(c.t,`<div class="row"><span class="sec">Componente ${S.i+1} de ${S.need.length}</span><span class="mono">${n}/${mn} escolhas</span></div><div class="bar"><i style="width:${(S.i+1)/S.need.length*100}%"></i></div><div class="sec">${of.length?"Marque a 1ª, 2ª e 3ª opção.":"Não há ofertas com vagas nesta componente. Procure a coordenação."}</div>`+of.map(([x,d])=>`<div class="card ${p.includes(x)?"sel":""}"><div class="row"><b style="font-size:16px">${x}</b><span class="mono">${c.q-used(x)} vagas</span></div><div class="sec" style="font-weight:600">${esc(d)}</div><div class="seg">${[0,1,2].map(i=>`<button class="${p[i]===x?"on":""}" data-x="${x}" data-r="${i}" aria-pressed="${p[i]===x}">${i+1}ª</button>`).join("")}</div></div>`).join("")+(S.msg?`<div class="err">${esc(S.msg)}</div>`:""),
+  const k=S.need[S.i],c=C.find(x=>x.k===k),of=offs(c,y).filter(o=>used(o.x)<o.q),p=S.p[k]=S.p[k]||[],mn=Math.min(3,of.length),n=p.filter(Boolean).length,ok=mn>0&&n>=mn,last=S.i===S.need.length-1;
+  shell(esc(c.t),`<div class="row"><span class="sec">Componente ${S.i+1} de ${S.need.length}</span><span class="mono">${n}/${mn} escolhas</span></div><div class="bar"><i style="width:${(S.i+1)/S.need.length*100}%"></i></div><div class="sec">${of.length?"Marque a 1ª, 2ª e 3ª opção.":"Não há ofertas com vagas nesta componente. Procure a coordenação."}</div>`+of.map(({x,d,q})=>`<div class="card ${p.includes(x)?"sel":""}"><div class="row"><b style="font-size:16px">${esc(x)}</b><span class="mono">${q-used(x)} vagas</span></div>${d?`<div class="sec" style="font-weight:600">${esc(d)}</div>`:""}<div class="seg">${[0,1,2].map(i=>`<button class="${p[i]===x?"on":""}" data-x="${esc(x)}" data-r="${i}" aria-pressed="${p[i]===x}">${i+1}ª</button>`).join("")}</div></div>`).join("")+(S.msg?`<div class="err">${esc(S.msg)}</div>`:""),
   `<button class="btn ${last?"o":""}" id="nx" ${ok?"":"disabled"}>${last?"Confirmar inscrição":"Próxima componente"}</button><button class="btn g" id="bk">${S.i?"Voltar":"Cancelar"}</button>`,`<span class="pill w">${esc(E.n.split(" ")[0])}</span>`);
   document.querySelectorAll(".seg button").forEach(b=>b.onclick=()=>{const x=b.dataset.x,r=+b.dataset.r;if(p[r]===x)p[r]=undefined;else{const j=p.indexOf(x);if(j>=0)p[j]=undefined;p[r]=x}render()});
   $("bk").onclick=()=>{if(S.i){S.i--;S.msg="";render()}else if(Object.keys(E.c).length){S.step="st";render()}else login()};
   $("nx").onclick=()=>{if(last)send();else{S.i++;S.msg="";render();scrollTo(0,0)}};return}
  const d=E.c,R=E.rodada,exc=C.map(c=>c.k).filter(k=>!d[k]||d[k].st===EX),all=C.every(c=>d[c.k]&&d[c.k].st===IN),av=C.some(c=>d[c.k]&&d[c.k].st===AV);
- shell("Status de inscrição",`<div class="card sel"><b style="font-size:16px">${esc(E.n)}</b><div class="mono">Matrícula ${E.m}</div></div>`+(S.msg?`<div class="okm">${esc(S.msg)}</div>`:"")+C.map(c=>{const e=d[c.k]||{ch:[],st:EX};return`<div class="card"><div class="row"><div class="sec">${c.t}</div>${bd(e.st)}</div>${e.st===IN?`<div class="rk"><b>✓</b><span>${e.of}</span></div>`:e.ch.map((x,i)=>`<div class="rk"><b>${i+1}ª</b><span>${x}</span></div>`).join("")}</div>`}).join("")+(av?'<div class="sec">Aguardando validação da coordenação.</div>':"")+(!av&&exc.length&&R===1?'<div class="sec">Aguarde a próxima rodada para se inscrever nas componentes em que ficou excedido.</div>':""),
+ shell("Status de inscrição",`<div class="card sel"><b style="font-size:16px">${esc(E.n)}</b><div class="mono">Matrícula ${E.m}</div></div>`+(S.msg?`<div class="okm">${esc(S.msg)}</div>`:"")+C.map(c=>{const e=d[c.k]||{ch:[],st:EX};return`<div class="card"><div class="row"><div class="sec">${esc(c.t)}</div>${bd(e.st)}</div>${e.st===IN?`<div class="rk"><b>✓</b><span>${esc(e.of)}</span></div>`:e.ch.map((x,i)=>`<div class="rk"><b>${i+1}ª</b><span>${esc(x)}</span></div>`).join("")}</div>`}).join("")+(av?'<div class="sec">Aguardando validação da coordenação.</div>':"")+(!av&&exc.length&&R===1?'<div class="sec">Aguarde a próxima rodada para se inscrever nas componentes em que ficou excedido.</div>':""),
   (R>1&&exc.length?`<button class="btn o" id="ins">Inscrição</button>`:"")+(all?`<button class="btn" id="pdf">Emitir comprovante</button>`:"")+`<button class="btn g" id="out">Sair</button>`,`<span class="pill">${all?"Inscrito":"Rodada "+R}</span>`);
  const i=$("ins");if(i)i.onclick=()=>wiz(exc);const p=$("pdf");if(p)p.onclick=comprovante;$("out").onclick=login}
 async function send(){
@@ -108,7 +111,7 @@ async function send(){
  try{const r=await api("/api/inscricao",{m:S.est.m,escolhas});S.est.c=r.c;S.est.rodada=r.rodada;S.msg="Inscrição enviada e registrada.";S.step="st";render();scrollTo(0,0)}
  catch(e){S.msg=e.message;render()}}
 function comprovante(){
- const E=S.est,d=E.c,L=["Instituto Federal - Comprovante de inscricao 27.1","","Estudante: "+E.n,"Matricula: "+E.m,"Rodada: "+E.rodada,""];
+ const E=S.est,d=E.c,L=["Instituto Federal - Comprovante de inscricao "+CICLO,"","Estudante: "+E.n,"Matricula: "+E.m,"Rodada: "+E.rodada,""];
  C.forEach(c=>L.push(c.t+": "+d[c.k].of+" ("+d[c.k].st+")"));
  const t=L.map(l=>l.replace(/[^\x20-\xFF]/g,"?").replace(/[\\()]/g,"\\$&")),ct="BT /F1 12 Tf 50 790 Td 18 TL "+t.map(l=>`(${l}) Tj T*`).join("\n")+" ET",ps=[];let s="%PDF-1.4\n";
  const ad=x=>{ps.push(s.length);s+=x};
@@ -117,23 +120,120 @@ function comprovante(){
  baixar("comprovante-"+E.m+".pdf",Uint8Array.from(s,c=>c.charCodeAt(0)&255),"application/pdf")}
 
 // ---------- Coordenação ----------
-async function coord(acao,msg){
+const coordApi=(acao,extra)=>api("/api/coordenacao",{m:S.co.m,senha:S.co.senha,acao,...(extra||{})});
+function sairPor401(e){S.co.senha="";login();$("who").innerHTML=`<div class="err">${esc(e.message)}</div>`}
+async function coord(acao,extra){
  const b=document.querySelector("footer .btn");if(b){b.disabled=true}
- try{const r=await api("/api/coordenacao",{m:S.co.m,senha:S.co.senha,acao});
-  S.painel=r;C=r.componentes;painel(msg||(acao==="validar"?`Validação concluída: ${r.alterados} escolhas avaliadas.`:acao==="rodada"?`Rodada ${r.rodada} iniciada. Estudantes excedidos já podem se inscrever novamente.`:""))}
- catch(e){if(e.status===401){S.co.senha="";login();setTimeout(()=>{$("who").innerHTML=`<div class="err">${esc(e.message)}</div>`},0);return}
+ try{const r=await coordApi(acao,extra);S.painel=r;C=r.componentes;setCiclo(r.ciclo);
+  painel(acao==="validar"?`Validação concluída: ${r.alterados} escolhas avaliadas.`:acao==="rodada"?`Rodada ${r.rodada} iniciada. Estudantes excedidos já podem se inscrever novamente.`:acao==="novo_ciclo"?`Ciclo ${r.ciclo} iniciado. Envie as planilhas do semestre em Atualizar dados.`:"")}
+ catch(e){if(e.status===401)return sairPor401(e);
   if(S.painel)painel(null,e.message);else{shell("Coordenação",`<div class="err">${esc(e.message)}</div>`,`<button class="btn g" id="out">Voltar</button>`);$("out").onclick=login}}}
+// Arquivo de inscrições (Excel): resultado por estudante, detalhe das escolhas e ocupação das ofertas.
+async function baixarInscricoes(){
+ const [X,d]=await Promise.all([leitor(),coordApi("relatorio")]);
+ const K=d.componentes,nomeSt={[IN]:"Inscrito",[EX]:"Excedido",[AV]:"Em avaliação"};
+ const res=[["Matrícula","Nome","Ano","Prioridade","Frequência (%)",...K.map(c=>c.k),"Situação"]];
+ const det=[["Matrícula","Nome","Ano","Componente","Situação","Oferta","1ª opção","2ª opção","3ª opção","Rodada"]];
+ const ocup={};
+ for(const e of d.estudantes){
+  const st=K.map(c=>e.c[c.k]),n={in:0,ex:0,av:0,sem:0};
+  st.forEach(x=>{if(!x)n.sem++;else if(x.st===IN)n.in++;else if(x.st===EX)n.ex++;else n.av++});
+  const sit=n.sem===K.length?"Sem inscrição":n.in===K.length?"Inscrito em todas":n.av?"Aguardando validação":n.ex?`Excedido em ${n.ex} ${n.ex===1?"componente":"componentes"}`:"Inscrição incompleta";
+  res.push([e.matricula,e.nome,e.ano,e.prioridade,e.frequencia,...st.map(x=>!x?"Sem inscrição":x.st===IN?x.of:nomeSt[x.st]||x.st),sit]);
+  for(const c of K){const x=e.c[c.k];if(!x)continue;if(x.st===IN)ocup[x.of]=(ocup[x.of]||0)+1;
+   det.push([e.matricula,e.nome,e.ano,c.k,nomeSt[x.st]||x.st,x.of||"",x.ch[0]||"",x.ch[1]||"",x.ch[2]||"",x.r])}}
+ const ofs=[["Componente","Oferta","Descrição","Vagas","Inscritos","Vagas livres"]];
+ for(const c of K)for(const o of c.o)ofs.push([c.k,o.x,o.d,o.q,ocup[o.x]||0,o.q-(ocup[o.x]||0)]);
+ const wb=X.utils.book_new(),aba=(nome,linhas,larg)=>{const ws=X.utils.aoa_to_sheet(linhas);ws["!cols"]=larg.map(w=>({wch:w}));ws["!autofilter"]={ref:X.utils.encode_range({s:{r:0,c:0},e:{r:linhas.length-1,c:linhas[0].length-1}})};X.utils.book_append_sheet(wb,ws,nome)};
+ aba("Resultado",res,[15,38,5,10,14,...K.map(()=>14),24]);
+ aba("Escolhas",det,[15,38,5,12,13,12,12,12,12,8]);
+ aba("Ofertas",ofs,[12,10,40,7,9,11]);
+ X.writeFile(wb,`inscricoes-${String(d.ciclo).replace(/[^\w.-]+/g,"_")}-rodada-${d.rodada}.xlsx`)}
 function painel(msg,erro){
  S.step="painel";const P=S.painel,r=P.resumo;
+ const falta=[!P.estudantes&&"estudantes",!P.frequencia&&"prioridade e frequência",!P.ofertas&&"componentes e ofertas"].filter(Boolean);
  shell("Coordenação",(msg?`<div class="okm">${esc(msg)}</div>`:"")+(erro?`<div class="err">${esc(erro)}</div>`:"")+
-  (P.estudantes&&P.frequencia?`<div class="card"><div class="row"><span class="sec">Estudantes</span><span class="badge">${P.estudantes}</span></div><div class="row" style="margin-top:8px"><span class="sec">Prioridade e frequência</span><span class="badge">${P.frequencia}</span></div></div>`:"")+(P.estudantes?"":'<div class="err">A tabela de estudantes está vazia. Rode o arquivo estudantes.sql no SQL Editor do Neon e atualize esta página.</div>')+(P.frequencia?"":'<div class="err">A tabela de prioridade e frequência está vazia. Rode o arquivo frequencia.sql no SQL Editor do Neon e atualize esta página.</div>')+
-  C.map(c=>`<div class="card"><div class="sec">${c.t}</div>`+c.o.map((_,i)=>{const x=code(c,i);return`<div class="rk"><b>${x}</b><span class="mono">${r[c.k].ofertas[x]}/${c.q} inscritos</span></div>`}).join("")+`<div class="row" style="margin-top:8px"><span class="mono">Avaliação ${r[c.k].av}</span><span class="mono">Excedidos ${r[c.k].ex}</span></div></div>`).join(""),
-  `<button class="btn o" id="val" ${P.frequencia&&P.estudantes?"":"disabled"}>Validar inscrições</button><div class="grid2"><button class="btn" id="csv">Exibir arquivo de inscrições</button><button class="btn g" id="nr">Iniciar nova rodada</button></div><button class="btn g" id="out">Sair</button>`,`<span class="pill w">Rodada ${P.rodada}</span>`);
+  (falta.length?`<div class="err">Faltam dados de ${falta.join(", ")}. Use Atualizar dados para enviar as planilhas.</div>`:"")+
+  `<div class="card"><div class="sec" style="margin-bottom:4px">Dados do ciclo ${esc(CICLO)}</div>`+
+  [["Estudantes",P.estudantes],["Prioridade e frequência",P.frequencia],["Ofertas",P.ofertas?`${P.ofertas} em ${C.length} componentes`:0],["Estudantes com inscrição",P.inscritos]].map(([t,n])=>`<div class="row" style="padding:6px 0;border-top:1.5px solid #E2E8F0"><span>${t}</span><span class="badge ${n?"":"e"}">${n||0}</span></div>`).join("")+
+  `<div class="grid2" style="margin-top:12px"><button class="btn g" id="upd">Atualizar dados</button><button class="btn r" id="clr">Novo ciclo</button></div></div>`+
+  C.map(c=>`<div class="card"><div class="sec">${esc(c.k)} · ${esc(c.t)}</div>`+c.o.map(o=>`<div class="rk"><b>${esc(o.x)}</b><span class="mono">${(r[c.k]&&r[c.k].ofertas[o.x])||0}/${o.q} inscritos${o.anos.length<3?" · só "+o.anos.join("º, ")+"º ano":""}</span></div>`).join("")+`<div class="row" style="margin-top:8px"><span class="mono">Avaliação ${r[c.k].av}</span><span class="mono">Excedidos ${r[c.k].ex}</span></div></div>`).join(""),
+  `<button class="btn o" id="val" ${falta.length?"disabled":""}>Validar inscrições</button><div class="grid2"><button class="btn" id="csv">Exibir arquivo de inscrições</button><button class="btn g" id="nr">Iniciar nova rodada</button></div><button class="btn g" id="out">Sair</button>`,`<span class="pill w">${esc(CICLO)} · Rodada ${P.rodada}</span>`);
  $("val").onclick=()=>{$("val").textContent="Validando…";coord("validar")};
- $("csv").onclick=async()=>{try{const x=await fetch("/api/coordenacao",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({m:S.co.m,senha:S.co.senha,acao:"csv"})});if(!x.ok)throw 0;baixar("inscricoes.csv",await x.blob(),"text/csv")}catch(e){painel(null,"Não foi possível gerar o arquivo de inscrições.")}};
+ $("csv").onclick=()=>{const b=$("csv"),t=b.textContent;b.disabled=true;b.textContent="Gerando…";baixarInscricoes().catch(e=>{if(e.status===401)return sairPor401(e);painel(null,e.message)}).finally(()=>{if($("csv")===b){b.disabled=false;b.textContent=t}})};
  $("nr").onclick=()=>{if(confirm("Iniciar a rodada "+(P.rodada+1)+"? Estudantes excedidos poderão se inscrever novamente."))coord("rodada")};
- $("out").onclick=login}
-login();
+ $("upd").onclick=()=>dados();$("clr").onclick=()=>novoCiclo();$("out").onclick=login}
+
+// ---------- Atualizar dados (planilhas) ----------
+const TAB={
+ estudantes:{t:"Estudantes",n:"estudantes",cols:"Matrícula · Nome · Ano (1, 2 ou 3)",req:["matricula","nome","ano"],
+  f:{matricula:h=>h.startsWith("matric"),nome:h=>["nome","estudante","aluno","aluna","nome do estudante","nome da estudante","nome do aluno","nome completo"].includes(h),ano:h=>["ano","serie","ano serie","serie ano","ano do curso","ano de curso"].includes(h)}},
+ frequencia:{t:"Prioridade e frequência",n:"frequencia",cols:"Matrícula · Prioridade (SIM ou NÃO) · Frequência (%)",nota:"Pode ser a mesma planilha dos estudantes.",req:["matricula","frequencia"],
+  f:{matricula:h=>h.startsWith("matric"),prioridade:h=>h.startsWith("priori"),frequencia:h=>h.startsWith("frequen")}},
+ ofertas:{t:"Componentes e ofertas",n:"ofertas",cols:"Componente (sigla) · Nome da componente · Oferta (código) · Descrição · Vagas · Anos (vazio = todos)",req:["componente","oferta","vagas"],
+  f:{componente:h=>["componente","sigla","sigla da componente","componente sigla"].includes(h),titulo:h=>["nome da componente","titulo","nome componente","componente nome","nome"].includes(h),oferta:h=>["oferta","codigo","codigo da oferta","turma"].includes(h),descricao:h=>h.startsWith("descri")||h.startsWith("profes")||h.startsWith("docen"),vagas:h=>h.startsWith("vaga"),anos:h=>["anos","anos permitidos","ano permitido","anos que podem","publico","ano"].includes(h)}}};
+const ROT={matricula:"Matrícula",nome:"Nome",ano:"Ano",prioridade:"Prioridade",frequencia:"Frequência",componente:"Componente",titulo:"Nome da componente",oferta:"Oferta",descricao:"Descrição",vagas:"Vagas",anos:"Anos"};
+const norm=v=>String(v??"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9]+/g," ").trim();
+let XL;
+function leitor(){return XL||(XL=new Promise((ok,er)=>{const s=document.createElement("script");s.src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js";s.onload=()=>ok(window.XLSX);s.onerror=()=>{XL=null;er(new Error("Não foi possível carregar o leitor de planilhas. Verifique a internet e tente de novo."))};document.head.appendChild(s)}))}
+async function lerPlanilha(arq,tb){
+ const X=await leitor(),wb=X.read(await arq.arrayBuffer(),{type:"array"}),aba=wb.SheetNames[0];
+ const L=X.utils.sheet_to_json(wb.Sheets[aba],{header:1,defval:"",raw:true,blankrows:false});
+ for(let i=0;i<Math.min(L.length,15);i++){
+  const mapa={};L[i].forEach((h,j)=>{const n=norm(h);if(!n)return;for(const [k,fn] of Object.entries(tb.f))if(mapa[k]===undefined&&fn(n)){mapa[k]=j;break}});
+  if(tb.req.filter(k=>mapa[k]!==undefined).length<2)continue;
+  const falta=tb.req.filter(k=>mapa[k]===undefined);
+  if(falta.length)throw new Error(`Na aba "${aba}" faltam as colunas: ${falta.map(k=>ROT[k]).join(", ")}.`);
+  const linhas=[];
+  for(let r=i+1;r<L.length;r++){const o={linha:r+1};let tem=false;for(const [k,j] of Object.entries(mapa)){o[k]=L[r][j];if(String(L[r][j]).trim())tem=true}if(tem)linhas.push(o)}
+  return{aba,linhas,colunas:Object.keys(mapa).map(k=>ROT[k])}}
+ throw new Error(`Não encontrei os títulos das colunas na aba "${aba}". A primeira linha deve ter: ${tb.req.map(k=>ROT[k]).join(", ")}.`)}
+async function exportarPlanilhas(quais){
+ const [X,d]=await Promise.all([leitor(),coordApi("exportar")]);
+ const conf={estudantes:[["Matrícula","Nome","Ano"],r=>[r.matricula,r.nome,r.ano]],frequencia:[["Matrícula","Nome","Prioridade","Frequência"],r=>[r.matricula,r.nome,r.prioridade,r.frequencia]],ofertas:[["Componente","Nome da componente","Oferta","Descrição","Vagas","Anos"],r=>[r.componente,r.titulo,r.oferta,r.descricao,r.vagas,r.anos]]};
+ for(const k of quais){const [h,fn]=conf[k],ws=X.utils.aoa_to_sheet([h,...d[k].map(fn)]);ws["!cols"]=h.map((_,i)=>({wch:i===1||i===3?40:16}));const wb=X.utils.book_new();X.utils.book_append_sheet(wb,ws,TAB[k].t.slice(0,31));X.writeFile(wb,k+".xlsx")}}
+function dados(msg){
+ S.step="dados";S.up={};const P=S.painel;
+ shell("Atualizar dados",`<div class="sec">Envie uma planilha (.xlsx, .xls ou .csv) para cada tabela. O app lê a primeira aba, com os títulos das colunas na primeira linha. Cada envio <b>substitui todos os dados</b> daquela tabela.</div>`+(msg?`<div class="okm">${esc(msg)}</div>`:"")+
+  Object.entries(TAB).map(([k,tb])=>`<div class="card"><div class="row"><b style="font-size:16px">${tb.t}</b><span class="badge ${P[k]?"":"e"}">${P[k]||0}</span></div><div class="mono" style="margin-top:6px">${tb.cols}</div>${tb.nota?`<div class="sec" style="font-weight:600;margin-top:4px">${tb.nota}</div>`:""}<div id="m-${k}" style="margin-top:10px"></div><div class="grid2" style="margin-top:10px"><label class="btn g file">Escolher planilha<input type="file" id="f-${k}" accept=".xlsx,.xls,.csv"></label><button class="btn g" id="x-${k}">Baixar atual</button></div><button class="btn o" id="u-${k}" style="margin-top:8px;display:none">Atualizar ${tb.t.toLowerCase()}</button></div>`).join("")+
+  `<div class="sec">Atualizar durante as inscrições afeta quem já se inscreveu: matrículas ou ofertas que saírem da planilha deixam de valer na validação.</div>`,
+  `<button class="btn g" id="bk">Voltar ao painel</button>`,`<span class="pill w">Coordenação</span>`);
+ for(const k of Object.keys(TAB)){
+  const m=$("m-"+k),u=$("u-"+k);
+  $("f-"+k).onchange=async ev=>{const a=ev.target.files[0];u.style.display="none";S.up[k]=null;if(!a)return;
+   m.innerHTML='<div class="sec">Lendo a planilha…</div>';
+   try{const r=await lerPlanilha(a,TAB[k]);S.up[k]=r;
+    m.innerHTML=r.linhas.length?`<div class="okm">${esc(a.name)}: ${r.linhas.length} linhas na aba "${esc(r.aba)}".<br>Colunas: ${esc(r.colunas.join(", "))}.</div>`:`<div class="err">A aba "${esc(r.aba)}" não tem linhas de dados.</div>`;
+    if(r.linhas.length)u.style.display=""}
+   catch(e){m.innerHTML=`<div class="err">${esc(e.message)}</div>`}
+   ev.target.value=""};
+  u.onclick=async()=>{if(!S.up[k])return;u.disabled=true;u.textContent="Enviando…";
+   try{const r=await coordApi("importar",{tabela:k,linhas:S.up[k].linhas});S.painel=r;C=r.componentes;setCiclo(r.ciclo);dados(`${TAB[k].t}: ${r.importado.linhas} registros gravados (${r.importado.detalhe}).`)}
+   catch(e){if(e.status===401)return sairPor401(e);
+    const er=(e.dados&&e.dados.erros)||[e.message];
+    m.innerHTML=`<div class="err">Nada foi gravado. Corrija a planilha e envie de novo:<ul class="lst">${er.slice(0,8).map(x=>`<li>${esc(x)}</li>`).join("")}</ul>${er.length>8?`e mais ${er.length-8} problemas.`:""}</div>`;
+    u.disabled=false;u.textContent="Atualizar "+TAB[k].t.toLowerCase()}};
+  $("x-"+k).onclick=()=>exportarPlanilhas([k]).catch(e=>{if(e.status===401)return sairPor401(e);m.innerHTML=`<div class="err">${esc(e.message)}</div>`})}
+ $("bk").onclick=()=>painel()}
+
+// ---------- Novo ciclo (semestre) ----------
+function novoCiclo(){
+ S.step="ciclo";const P=S.painel,ni=P.inscritos;
+ shell("Novo ciclo",`<div class="sec">Use no começo de cada semestre para abrir uma nova distribuição de componentes.</div><div class="err"><b>O banco será zerado. Serão apagados:</b><ul class="lst"><li>${P.estudantes} estudantes</li><li>${P.frequencia} registros de prioridade e frequência</li><li>${P.ofertas} ofertas das componentes</li><li>as inscrições de ${ni} ${ni===1?"estudante":"estudantes"} do ciclo ${esc(CICLO)}</li></ul>A rodada volta para 1. Não é possível desfazer.</div>`+
+  `<div class="card"><div class="sec">Guarde uma cópia do ciclo ${esc(CICLO)}</div><div class="grid2" style="margin-top:10px"><button class="btn g" id="bx">Baixar as 3 planilhas</button><button class="btn g" id="bc">Baixar inscrições</button></div><div id="bm"></div></div>`+
+  `<div class="sec">Nome do novo ciclo</div><input id="nc" autocomplete="off" placeholder="Ex.: 27.2" maxlength="20" aria-label="Nome do novo ciclo" style="font-family:Inter,sans-serif">`+
+  `<div class="sec">Digite NOVO CICLO para confirmar.</div><input id="cf" autocomplete="off" autocapitalize="characters" aria-label="Digite NOVO CICLO para confirmar" style="font-family:Inter,sans-serif">`+
+  `<div class="sec">Depois, envie as planilhas do novo semestre em Atualizar dados.</div>`,
+  `<button class="btn r" id="ok" disabled>Zerar e iniciar novo ciclo</button><button class="btn g" id="bk">Voltar ao painel</button>`,`<span class="pill w">Ciclo ${esc(CICLO)}</span>`);
+ const falha=e=>{if(e.status===401)return sairPor401(e);$("bm").innerHTML=`<div class="err" style="margin-top:10px">${esc(e.message)}</div>`};
+ $("bx").onclick=()=>exportarPlanilhas(["estudantes","frequencia","ofertas"]).catch(falha);
+ $("bc").onclick=()=>baixarInscricoes().catch(falha);
+ const chk=()=>$("ok").disabled=!$("nc").value.trim()||$("cf").value.trim().toUpperCase()!=="NOVO CICLO";
+ $("nc").oninput=chk;$("cf").oninput=chk;
+ $("ok").onclick=()=>{$("ok").textContent="Zerando…";coord("novo_ciclo",{ciclo:$("nc").value.trim(),confirmacao:"NOVO CICLO"})};
+ $("bk").onclick=()=>painel()}
+
+fetch("/api/ciclo",{cache:"no-store"}).then(r=>r.json()).then(d=>setCiclo(d.ciclo)).catch(()=>{}).finally(login);
 </script>
 </body>
 </html>

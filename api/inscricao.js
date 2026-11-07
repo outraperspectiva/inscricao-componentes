@@ -1,5 +1,5 @@
-import { db, rodadaAtual, inscricoesDe, buscarEstudante } from "../lib/db.js";
-import { COMPONENTES, ofertas, AV, EX } from "../lib/dados.js";
+import { db, rodadaAtual, inscricoesDe, buscarEstudante, carregarComponentes } from "../lib/db.js";
+import { ofertas, AV, EX } from "../lib/dados.js";
 
 // POST /api/inscricao  { m, escolhas: { BASE: ["BASE 01", "BASE 04", "BASE 02"], ... } }
 export default async function handler(req, res) {
@@ -12,7 +12,8 @@ export default async function handler(req, res) {
     const sql = await db();
     const e = await buscarEstudante(sql, m);
     if (!e) return res.status(404).json({ erro: "Matrícula não encontrada." });
-    const [rodada, atual] = await Promise.all([rodadaAtual(sql), inscricoesDe(sql, m)]);
+    const [rodada, atual, COMPONENTES] = await Promise.all([rodadaAtual(sql), inscricoesDe(sql, m), carregarComponentes(sql)]);
+    if (!COMPONENTES.length) return res.status(409).json({ erro: "As componentes ainda não foram cadastradas pela coordenação." });
     const jaInscreveu = Object.keys(atual).length > 0;
 
     // Na primeira inscrição o estudante escolhe todas as componentes.
@@ -31,7 +32,7 @@ export default async function handler(req, res) {
     const linhas = [];
     for (const k of pendentes) {
       const c = COMPONENTES.find((x) => x.k === k);
-      const validas = ofertas(c, e.y).map(([x]) => x);
+      const validas = ofertas(c, e.y).map((o) => o.x);
       const ch = Array.isArray(escolhas[k]) ? escolhas[k].map(String) : [];
       if (ch.length < 1 || ch.length > 3 || new Set(ch).size !== ch.length || !ch.every((x) => validas.includes(x))) {
         return res.status(400).json({ erro: "Opções inválidas em " + c.t + "." });
