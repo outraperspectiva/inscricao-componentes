@@ -22,10 +22,9 @@ h1{font-size:18px;line-height:24px;margin:0;font-weight:700;flex:1}h2{font-size:
 main{flex:1;padding:16px;display:flex;flex-direction:column;gap:12px}
 .card{background:var(--sf);border:1.5px solid var(--bd);border-radius:10px;padding:16px}.card.sel{border:2px solid var(--pr)}
 .sec{color:var(--ts);font-size:14px;line-height:18px;font-weight:700}.mono{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:12px;line-height:16px}
-input,textarea{width:100%;border:2px solid var(--bs);border-radius:10px;color:var(--tp);background:#fff}
+input{width:100%;border:2px solid var(--bs);border-radius:10px;color:var(--tp);background:#fff}
 input{min-height:56px;padding:0 14px;font:700 18px "JetBrains Mono",ui-monospace,monospace}
-textarea{min-height:220px;padding:12px 14px;font:600 13px/18px "JetBrains Mono",ui-monospace,monospace;resize:vertical}
-input:focus-visible,textarea:focus-visible,button:focus-visible{outline:3px solid var(--or);outline-offset:2px}
+input:focus-visible,button:focus-visible{outline:3px solid var(--or);outline-offset:2px}
 button{font:700 15px Inter,sans-serif;cursor:pointer;border-radius:10px;min-height:52px}
 .btn{width:100%;min-height:56px;color:#fff;border:2px solid #1E3A8A;background:var(--pr)}.btn.o{background:var(--or);border-color:#9A3412}.btn.g{background:#fff;color:var(--tp);border:1.5px solid var(--bd)}
 .btn:disabled{background:#CBD5E1;border-color:var(--bd);color:var(--ts);cursor:not-allowed}
@@ -118,32 +117,22 @@ function comprovante(){
  baixar("comprovante-"+E.m+".pdf",Uint8Array.from(s,c=>c.charCodeAt(0)&255),"application/pdf")}
 
 // ---------- Coordenação ----------
-async function coord(acao,extra,msg){
+async function coord(acao,msg){
  const b=document.querySelector("footer .btn");if(b){b.disabled=true}
- try{const r=await api("/api/coordenacao",{m:S.co.m,senha:S.co.senha,acao,...(extra||{})});
-  if(acao==="frequencia"){S.painelMsg=`Dados carregados: ${r.carregadas} estudantes`+(r.desconhecidas?` (${r.desconhecidas} matrículas fora da lista de estudantes).`:".");return coord("resumo",null,S.painelMsg)}
+ try{const r=await api("/api/coordenacao",{m:S.co.m,senha:S.co.senha,acao});
   S.painel=r;C=r.componentes;painel(msg||(acao==="validar"?`Validação concluída: ${r.alterados} escolhas avaliadas.`:acao==="rodada"?`Rodada ${r.rodada} iniciada. Estudantes excedidos já podem se inscrever novamente.`:""))}
  catch(e){if(e.status===401){S.co.senha="";login();setTimeout(()=>{$("who").innerHTML=`<div class="err">${esc(e.message)}</div>`},0);return}
-  if(S.step==="freq"){$("fm").innerHTML=`<div class="err">${esc(e.message)}</div>`;if(b)b.disabled=false;return}
   if(S.painel)painel(null,e.message);else{shell("Coordenação",`<div class="err">${esc(e.message)}</div>`,`<button class="btn g" id="out">Voltar</button>`);$("out").onclick=login}}}
 function painel(msg,erro){
  S.step="painel";const P=S.painel,r=P.resumo;
  shell("Coordenação",(msg?`<div class="okm">${esc(msg)}</div>`:"")+(erro?`<div class="err">${esc(erro)}</div>`:"")+
-  `<div class="card"><div class="row"><span class="sec">Dados de prioridade e frequência</span>${P.frequencia?`<span class="badge">${P.frequencia} ${P.frequencia===1?"estudante":"estudantes"}</span>`:'<span class="badge e">não carregados</span>'}</div></div>`+
+  (P.frequencia?`<div class="card"><div class="row"><span class="sec">Prioridade e frequência</span><span class="badge">${P.frequencia} ${P.frequencia===1?"estudante":"estudantes"}</span></div></div>`:'<div class="err">A tabela de prioridade e frequência está vazia. Rode o arquivo frequencia.sql no SQL Editor do Neon e atualize esta página.</div>')+
   C.map(c=>`<div class="card"><div class="sec">${c.t}</div>`+c.o.map((_,i)=>{const x=code(c,i);return`<div class="rk"><b>${x}</b><span class="mono">${r[c.k].ofertas[x]}/${c.q} inscritos</span></div>`}).join("")+`<div class="row" style="margin-top:8px"><span class="mono">Avaliação ${r[c.k].av}</span><span class="mono">Excedidos ${r[c.k].ex}</span></div></div>`).join(""),
-  `<button class="btn o" id="val">Validar inscrições</button><div class="grid2"><button class="btn" id="csv">Exibir arquivo de inscrições</button><button class="btn g" id="frq">Carregar frequência</button><button class="btn g" id="nr">Iniciar nova rodada</button><button class="btn g" id="out">Sair</button></div>`,`<span class="pill w">Rodada ${P.rodada}</span>`);
+  `<button class="btn o" id="val" ${P.frequencia?"":"disabled"}>Validar inscrições</button><div class="grid2"><button class="btn" id="csv">Exibir arquivo de inscrições</button><button class="btn g" id="nr">Iniciar nova rodada</button></div><button class="btn g" id="out">Sair</button>`,`<span class="pill w">Rodada ${P.rodada}</span>`);
  $("val").onclick=()=>{$("val").textContent="Validando…";coord("validar")};
  $("csv").onclick=async()=>{try{const x=await fetch("/api/coordenacao",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({m:S.co.m,senha:S.co.senha,acao:"csv"})});if(!x.ok)throw 0;baixar("inscricoes.csv",await x.blob(),"text/csv")}catch(e){painel(null,"Não foi possível gerar o arquivo de inscrições.")}};
- $("frq").onclick=freq;
  $("nr").onclick=()=>{if(confirm("Iniciar a rodada "+(P.rodada+1)+"? Estudantes excedidos poderão se inscrever novamente."))coord("rodada")};
  $("out").onclick=login}
-function freq(){
- S.step="freq";
- shell("Prioridade e frequência",`<div class="sec">Cole as linhas da planilha: matrícula, prioritário (SIM ou NÃO) e frequência. As colunas podem estar separadas por tabulação, ponto e vírgula ou barra vertical.</div><div class="mono">2026101610045;SIM;92,5</div><textarea id="tx" aria-label="Dados de prioridade e frequência" placeholder="matrícula;prioritário;frequência"></textarea><div id="fm"></div><div class="sec">Os dados novos substituem os anteriores.</div>`,
-  `<button class="btn" id="sv">Salvar dados</button><button class="btn g" id="bk">Voltar</button>`,`<span class="pill w">Coordenação</span>`);
- $("sv").onclick=()=>{if(!$("tx").value.trim()){$("fm").innerHTML='<div class="err">Cole os dados antes de salvar.</div>';return}coord("frequencia",{texto:$("tx").value})};
- $("bk").onclick=()=>painel()}
-
 login();
 </script>
 </body>
