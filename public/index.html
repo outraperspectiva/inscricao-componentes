@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#FFFFFF">
+<title>Inscrição em Componentes 27.1</title>
+<link rel="icon" href="/logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&family=JetBrains+Mono:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root{--cv:#F1F5F9;--sf:#fff;--tp:#090D16;--ts:#334155;--bd:#94A3B8;--bs:#475569;--pr:#1D4ED8;--or:#EA580C;--ok:#15803D;--okb:#DCFCE7;--okt:#14532D;--wb:#FEF3C7;--wt:#92400E;--er:#B91C1C;--erb:#FEE2E2;color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:inherit;-webkit-tap-highlight-color:transparent}html,body{margin:0;background:#CBD5E1}
+body{font-family:Inter,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--tp);font-weight:600;font-size:15px;line-height:22px}
+.app{max-width:412px;margin:0 auto;min-height:100vh;background:var(--cv);display:flex;flex-direction:column}
+header{position:sticky;top:0;z-index:5;background:var(--sf);border-bottom:1.5px solid var(--bd);padding:12px 16px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+header img{height:34px;width:auto}
+h1{font-size:18px;line-height:24px;margin:0;font-weight:700;flex:1}h2{font-size:22px;line-height:28px;margin:0;font-weight:700;letter-spacing:-.02em}
+.pill{border:1.5px solid var(--ok);background:var(--okb);color:var(--okt);border-radius:9999px;padding:6px 12px;font-size:12px;font-weight:800;white-space:nowrap}
+.pill.w{border-color:#B45309;background:var(--wb);color:var(--wt)}
+main{flex:1;padding:16px;display:flex;flex-direction:column;gap:12px}
+.card{background:var(--sf);border:1.5px solid var(--bd);border-radius:10px;padding:16px}.card.sel{border:2px solid var(--pr)}
+.sec{color:var(--ts);font-size:14px;line-height:18px;font-weight:700}.mono{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:12px;line-height:16px}
+input,textarea{width:100%;border:2px solid var(--bs);border-radius:10px;color:var(--tp);background:#fff}
+input{min-height:56px;padding:0 14px;font:700 18px "JetBrains Mono",ui-monospace,monospace}
+textarea{min-height:220px;padding:12px 14px;font:600 13px/18px "JetBrains Mono",ui-monospace,monospace;resize:vertical}
+input:focus-visible,textarea:focus-visible,button:focus-visible{outline:3px solid var(--or);outline-offset:2px}
+button{font:700 15px Inter,sans-serif;cursor:pointer;border-radius:10px;min-height:52px}
+.btn{width:100%;min-height:56px;color:#fff;border:2px solid #1E3A8A;background:var(--pr)}.btn.o{background:var(--or);border-color:#9A3412}.btn.g{background:#fff;color:var(--tp);border:1.5px solid var(--bd)}
+.btn:disabled{background:#CBD5E1;border-color:var(--bd);color:var(--ts);cursor:not-allowed}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}.seg button{background:#fff;border:1.5px solid var(--bd);color:var(--tp)}.seg button.on{background:var(--pr);border-color:#1E3A8A;color:#fff}
+.bar{height:10px;background:#E2E8F0;border:1.5px solid var(--bd);border-radius:9999px;overflow:hidden}.bar i{display:block;height:100%;background:var(--or)}
+footer{position:sticky;bottom:0;background:var(--sf);border-top:1.5px solid var(--bd);padding:12px 16px 20px;display:flex;flex-direction:column;gap:8px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}.grid2 .btn{min-height:48px;font-size:14px;line-height:18px;padding:4px 8px}
+.row{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.err{color:#7F1D1D;background:var(--erb);border:2px solid var(--er);border-radius:10px;padding:10px 14px;font-size:14px}
+.okm{color:var(--okt);background:var(--okb);border:2px solid var(--ok);border-radius:10px;padding:10px 14px;font-size:14px}
+.badge{white-space:nowrap;background:var(--okb);border:1.5px solid var(--ok);color:var(--okt);border-radius:9999px;padding:2px 10px;font-size:12px;font-weight:800}
+.badge.w{background:var(--wb);border-color:#B45309;color:var(--wt)}.badge.e{background:var(--erb);border-color:var(--er);color:#7F1D1D}
+.rk{display:flex;gap:10px;align-items:center;padding:8px 0;border-top:1.5px solid #E2E8F0}.rk b{background:var(--pr);color:#fff;border-radius:6px;padding:0 8px;font:700 12px "JetBrains Mono",monospace}
+</style>
+</head>
+<body><div class="app" id="app"></div>
+<script>
+const AV="avaliação",IN="inscrito",EX="excedido";
+const $=id=>document.getElementById(id),A=$("app");
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const code=(c,i)=>c.k+" "+String(i+1).padStart(2,"0");
+const offs=(c,y)=>c.o.map((d,i)=>[code(c,i),d]).filter(([x])=>!(x==="OFTEC 01"&&y!==1));
+let S={step:"login",p:{}},C=[];
+
+async function api(url,body){
+ const r=await fetch(url,body?{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)}:{cache:"no-store"});
+ let j={};try{j=await r.json()}catch(e){}
+ if(!r.ok){const e=new Error(j.erro||"Sem conexão com o servidor. Tente novamente.");e.status=r.status;throw e}
+ return j}
+function baixar(nome,dados,tipo){const u=URL.createObjectURL(new Blob([dados],{type:tipo})),a=document.createElement("a");a.href=u;a.download=nome;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),2000)}
+
+function shell(h,b,f,pill){
+ const r=S.est?S.est.rodada:S.painel?S.painel.rodada:null;
+ A.innerHTML=`<header><img src="/logo.png" alt="Instituto Federal"><h1>${h}</h1>${pill||(r?`<span class="pill">Rodada ${r}</span>`:"")}</header><main>${b}</main>${f?`<footer>${f}</footer>`:""}`}
+const bd=s=>`<span class="badge ${s===IN?"":s===EX?"e":"w"}">${s}</span>`;
+const used=x=>(S.est.usados&&S.est.usados[x])||0;
+
+// ---------- Entrada ----------
+let tm,seq=0;
+function login(){
+ S={step:"login",p:{}};
+ shell("Inscrição 27.1",`<h2>Entrar</h2><div class="sec">Digite sua matrícula.</div><input id="mt" inputmode="numeric" autocomplete="off" placeholder="Matrícula" aria-label="Matrícula"><div id="who"></div>`,`<button class="btn" id="go" disabled>Inscrição</button>`);
+ $("mt").focus();
+ $("mt").oninput=()=>{clearTimeout(tm);S.est=null;S.co=null;$("go").disabled=true;$("go").textContent="Inscrição";
+  const v=$("mt").value.replace(/\D/g,"");$("who").innerHTML="";
+  if(v.length<7)return;tm=setTimeout(()=>buscar(v),300)};
+ $("go").onclick=entrar}
+async function buscar(v){
+ const n=++seq;$("who").innerHTML='<div class="sec">Procurando matrícula…</div>';
+ try{const d=await api("/api/estudante?m="+encodeURIComponent(v));if(n!==seq)return;
+  if(d.coordenacao){S.co={m:v,n:d.n};
+   $("who").innerHTML=`<div class="card sel"><div class="sec">Coordenação</div><div style="font-size:16px;font-weight:700">${esc(d.n)}</div><div class="mono">Matrícula ${v}</div></div><div class="sec">Senha da coordenação</div><input id="sn" type="password" autocomplete="current-password" aria-label="Senha da coordenação" style="font-family:Inter,sans-serif">`;
+   $("go").textContent="Entrar";$("sn").oninput=()=>$("go").disabled=!$("sn").value;$("sn").onkeydown=e=>{if(e.key==="Enter"&&$("sn").value)entrar()};$("sn").focus();return}
+  S.est=d;C=d.componentes;const tem=Object.keys(d.c).length>0;
+  $("who").innerHTML=`<div class="card sel"><div class="sec">Estudante</div><div style="font-size:16px;font-weight:700">${esc(d.n)}</div><div class="mono">Matrícula ${v}</div></div>`;
+  $("go").textContent=tem?"Status de inscrição":"Inscrição";$("go").disabled=false}
+ catch(e){if(n!==seq)return;$("who").innerHTML=e.status===404?(v.length>=12?'<div class="err">Matrícula não encontrada. Confira os números e digite de novo.</div>':""):`<div class="err">${esc(e.message)}</div>`}}
+function entrar(){
+ if(S.co){S.co.senha=$("sn").value;return coord("resumo")}
+ if(!S.est)return;
+ if(Object.keys(S.est.c).length){S.step="st";render()}else wiz(C.map(c=>c.k))}
+
+// ---------- Estudante ----------
+function wiz(n){S.need=n;S.i=0;S.p={};S.step="w";S.msg="";render();scrollTo(0,0)}
+function render(){
+ const E=S.est,y=E.y;
+ if(S.step==="w"){
+  const k=S.need[S.i],c=C.find(x=>x.k===k),of=offs(c,y).filter(([x])=>used(x)<c.q),p=S.p[k]=S.p[k]||[],mn=Math.min(3,of.length),n=p.filter(Boolean).length,ok=mn>0&&n>=mn,last=S.i===S.need.length-1;
+  shell(c.t,`<div class="row"><span class="sec">Componente ${S.i+1} de ${S.need.length}</span><span class="mono">${n}/${mn} escolhas</span></div><div class="bar"><i style="width:${(S.i+1)/S.need.length*100}%"></i></div><div class="sec">${of.length?"Marque a 1ª, 2ª e 3ª opção.":"Não há ofertas com vagas nesta componente. Procure a coordenação."}</div>`+of.map(([x,d])=>`<div class="card ${p.includes(x)?"sel":""}"><div class="row"><b style="font-size:16px">${x}</b><span class="mono">${c.q-used(x)} vagas</span></div><div class="sec" style="font-weight:600">${esc(d)}</div><div class="seg">${[0,1,2].map(i=>`<button class="${p[i]===x?"on":""}" data-x="${x}" data-r="${i}" aria-pressed="${p[i]===x}">${i+1}ª</button>`).join("")}</div></div>`).join("")+(S.msg?`<div class="err">${esc(S.msg)}</div>`:""),
+  `<button class="btn ${last?"o":""}" id="nx" ${ok?"":"disabled"}>${last?"Confirmar inscrição":"Próxima componente"}</button><button class="btn g" id="bk">${S.i?"Voltar":"Cancelar"}</button>`,`<span class="pill w">${esc(E.n.split(" ")[0])}</span>`);
+  document.querySelectorAll(".seg button").forEach(b=>b.onclick=()=>{const x=b.dataset.x,r=+b.dataset.r;if(p[r]===x)p[r]=undefined;else{const j=p.indexOf(x);if(j>=0)p[j]=undefined;p[r]=x}render()});
+  $("bk").onclick=()=>{if(S.i){S.i--;S.msg="";render()}else if(Object.keys(E.c).length){S.step="st";render()}else login()};
+  $("nx").onclick=()=>{if(last)send();else{S.i++;S.msg="";render();scrollTo(0,0)}};return}
+ const d=E.c,R=E.rodada,exc=C.map(c=>c.k).filter(k=>!d[k]||d[k].st===EX),all=C.every(c=>d[c.k]&&d[c.k].st===IN),av=C.some(c=>d[c.k]&&d[c.k].st===AV);
+ shell("Status de inscrição",`<div class="card sel"><b style="font-size:16px">${esc(E.n)}</b><div class="mono">Matrícula ${E.m}</div></div>`+(S.msg?`<div class="okm">${esc(S.msg)}</div>`:"")+C.map(c=>{const e=d[c.k]||{ch:[],st:EX};return`<div class="card"><div class="row"><div class="sec">${c.t}</div>${bd(e.st)}</div>${e.st===IN?`<div class="rk"><b>✓</b><span>${e.of}</span></div>`:e.ch.map((x,i)=>`<div class="rk"><b>${i+1}ª</b><span>${x}</span></div>`).join("")}</div>`}).join("")+(av?'<div class="sec">Aguardando validação da coordenação.</div>':"")+(!av&&exc.length&&R===1?'<div class="sec">Aguarde a próxima rodada para se inscrever nas componentes em que ficou excedido.</div>':""),
+  (R>1&&exc.length?`<button class="btn o" id="ins">Inscrição</button>`:"")+(all?`<button class="btn" id="pdf">Emitir comprovante</button>`:"")+`<button class="btn g" id="out">Sair</button>`,`<span class="pill">${all?"Inscrito":"Rodada "+R}</span>`);
+ const i=$("ins");if(i)i.onclick=()=>wiz(exc);const p=$("pdf");if(p)p.onclick=comprovante;$("out").onclick=login}
+async function send(){
+ const b=$("nx");b.disabled=true;b.textContent="Enviando…";
+ const escolhas={};S.need.forEach(k=>escolhas[k]=(S.p[k]||[]).filter(Boolean));
+ try{const r=await api("/api/inscricao",{m:S.est.m,escolhas});S.est.c=r.c;S.est.rodada=r.rodada;S.msg="Inscrição enviada e registrada.";S.step="st";render();scrollTo(0,0)}
+ catch(e){S.msg=e.message;render()}}
+function comprovante(){
+ const E=S.est,d=E.c,L=["Instituto Federal - Comprovante de inscricao 27.1","","Estudante: "+E.n,"Matricula: "+E.m,"Rodada: "+E.rodada,""];
+ C.forEach(c=>L.push(c.t+": "+d[c.k].of+" ("+d[c.k].st+")"));
+ const t=L.map(l=>l.replace(/[^\x20-\xFF]/g,"?").replace(/[\\()]/g,"\\$&")),ct="BT /F1 12 Tf 50 790 Td 18 TL "+t.map(l=>`(${l}) Tj T*`).join("\n")+" ET",ps=[];let s="%PDF-1.4\n";
+ const ad=x=>{ps.push(s.length);s+=x};
+ ad("1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n");ad("2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj\n");ad("3 0 obj<</Type/Page/Parent 2 0 R/MediaBox[0 0 595 842]/Contents 4 0 R/Resources<</Font<</F1 5 0 R>>>>>>endobj\n");ad(`4 0 obj<</Length ${ct.length}>>stream\n${ct}\nendstream endobj\n`);ad("5 0 obj<</Type/Font/Subtype/Type1/BaseFont/Helvetica/Encoding/WinAnsiEncoding>>endobj\n");
+ const x=s.length;s+="xref\n0 6\n0000000000 65535 f \n"+ps.map(p=>String(p).padStart(10,"0")+" 00000 n \n").join("")+`trailer<</Size 6/Root 1 0 R>>\nstartxref\n${x}\n%%EOF`;
+ baixar("comprovante-"+E.m+".pdf",Uint8Array.from(s,c=>c.charCodeAt(0)&255),"application/pdf")}
+
+// ---------- Coordenação ----------
+async function coord(acao,extra,msg){
+ const b=document.querySelector("footer .btn");if(b){b.disabled=true}
+ try{const r=await api("/api/coordenacao",{m:S.co.m,senha:S.co.senha,acao,...(extra||{})});
+  if(acao==="frequencia"){S.painelMsg=`Dados carregados: ${r.carregadas} estudantes`+(r.desconhecidas?` (${r.desconhecidas} matrículas fora da lista de estudantes).`:".");return coord("resumo",null,S.painelMsg)}
+  S.painel=r;C=r.componentes;painel(msg||(acao==="validar"?`Validação concluída: ${r.alterados} escolhas avaliadas.`:acao==="rodada"?`Rodada ${r.rodada} iniciada. Estudantes excedidos já podem se inscrever novamente.`:""))}
+ catch(e){if(e.status===401){S.co.senha="";login();setTimeout(()=>{$("who").innerHTML=`<div class="err">${esc(e.message)}</div>`},0);return}
+  if(S.step==="freq"){$("fm").innerHTML=`<div class="err">${esc(e.message)}</div>`;if(b)b.disabled=false;return}
+  if(S.painel)painel(null,e.message);else{shell("Coordenação",`<div class="err">${esc(e.message)}</div>`,`<button class="btn g" id="out">Voltar</button>`);$("out").onclick=login}}}
+function painel(msg,erro){
+ S.step="painel";const P=S.painel,r=P.resumo;
+ shell("Coordenação",(msg?`<div class="okm">${esc(msg)}</div>`:"")+(erro?`<div class="err">${esc(erro)}</div>`:"")+
+  `<div class="card"><div class="row"><span class="sec">Dados de prioridade e frequência</span>${P.frequencia?`<span class="badge">${P.frequencia} ${P.frequencia===1?"estudante":"estudantes"}</span>`:'<span class="badge e">não carregados</span>'}</div></div>`+
+  C.map(c=>`<div class="card"><div class="sec">${c.t}</div>`+c.o.map((_,i)=>{const x=code(c,i);return`<div class="rk"><b>${x}</b><span class="mono">${r[c.k].ofertas[x]}/${c.q} inscritos</span></div>`}).join("")+`<div class="row" style="margin-top:8px"><span class="mono">Avaliação ${r[c.k].av}</span><span class="mono">Excedidos ${r[c.k].ex}</span></div></div>`).join(""),
+  `<button class="btn o" id="val">Validar inscrições</button><div class="grid2"><button class="btn" id="csv">Exibir arquivo de inscrições</button><button class="btn g" id="frq">Carregar frequência</button><button class="btn g" id="nr">Iniciar nova rodada</button><button class="btn g" id="out">Sair</button></div>`,`<span class="pill w">Rodada ${P.rodada}</span>`);
+ $("val").onclick=()=>{$("val").textContent="Validando…";coord("validar")};
+ $("csv").onclick=async()=>{try{const x=await fetch("/api/coordenacao",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({m:S.co.m,senha:S.co.senha,acao:"csv"})});if(!x.ok)throw 0;baixar("inscricoes.csv",await x.blob(),"text/csv")}catch(e){painel(null,"Não foi possível gerar o arquivo de inscrições.")}};
+ $("frq").onclick=freq;
+ $("nr").onclick=()=>{if(confirm("Iniciar a rodada "+(P.rodada+1)+"? Estudantes excedidos poderão se inscrever novamente."))coord("rodada")};
+ $("out").onclick=login}
+function freq(){
+ S.step="freq";
+ shell("Prioridade e frequência",`<div class="sec">Cole as linhas da planilha: matrícula, prioritário (SIM ou NÃO) e frequência. As colunas podem estar separadas por tabulação, ponto e vírgula ou barra vertical.</div><div class="mono">2026101610045;SIM;92,5</div><textarea id="tx" aria-label="Dados de prioridade e frequência" placeholder="matrícula;prioritário;frequência"></textarea><div id="fm"></div><div class="sec">Os dados novos substituem os anteriores.</div>`,
+  `<button class="btn" id="sv">Salvar dados</button><button class="btn g" id="bk">Voltar</button>`,`<span class="pill w">Coordenação</span>`);
+ $("sv").onclick=()=>{if(!$("tx").value.trim()){$("fm").innerHTML='<div class="err">Cole os dados antes de salvar.</div>';return}coord("frequencia",{texto:$("tx").value})};
+ $("bk").onclick=()=>painel()}
+
+login();
+</script>
+</body>
+</html>

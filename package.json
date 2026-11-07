@@ -1,0 +1,11 @@
+{
+  "name": "inscricao-componentes",
+  "version": "2.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Inscrição de estudantes nas componentes ofertadas em 2027.1",
+  "engines": { "node": ">=20" },
+  "dependencies": {
+    "@neondatabase/serverless": "1.1.0"
+  }
+}
