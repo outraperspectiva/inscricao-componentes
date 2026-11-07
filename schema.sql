@@ -16,3 +16,8 @@ create table if not exists frequencia (
   frequencia numeric not null default 0
 );
 create table if not exists config (chave text primary key, valor int not null);
+create table if not exists estudantes (
+  matricula text primary key,
+  nome      text not null,
+  ano       int  not null check (ano between 1 and 3)
+);

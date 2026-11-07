@@ -1,6 +1,5 @@
 import crypto from "node:crypto";
 import { db, rodadaAtual } from "../lib/db.js";
-import { ESTUDANTES } from "../lib/estudantes.js";
 import { COMPONENTES, COORDENACAO, ofertas, codigo, AV, IN, EX } from "../lib/dados.js";
 
 const hash = (s) => crypto.createHash("sha256").update(String(s)).digest();
@@ -50,10 +49,11 @@ export default async function handler(req, res) {
 }
 
 async function resumo(sql) {
-  const [rodada, rows, f] = await Promise.all([
+  const [rodada, rows, f, ne] = await Promise.all([
     rodadaAtual(sql),
     sql`select componente, status, oferta, count(*)::int as n from inscricoes group by componente, status, oferta`,
     sql`select count(*)::int as n from frequencia`,
+    sql`select count(*)::int as n from estudantes`,
   ]);
   const r = {};
   for (const c of COMPONENTES) r[c.k] = { ofertas: Object.fromEntries(c.o.map((_, i) => [codigo(c, i), 0])), av: 0, ex: 0 };
@@ -64,16 +64,19 @@ async function resumo(sql) {
     else if (x.status === AV) o.av += Number(x.n);
     else if (x.status === EX) o.ex += Number(x.n);
   }
-  return { rodada, resumo: r, frequencia: Number(f[0].n), componentes: COMPONENTES };
+  return { rodada, resumo: r, frequencia: Number(f[0].n), estudantes: Number(ne[0].n), componentes: COMPONENTES };
 }
 
 // Distribui as inscrições em avaliação conforme as Regras de Inscrição.
 async function validar(sql) {
-  const [rodada, freq, rows] = await Promise.all([
+  const [rodada, freq, rows, est] = await Promise.all([
     rodadaAtual(sql),
     sql`select matricula, prioritario, frequencia from frequencia`,
     sql`select matricula, componente, opcoes, status, oferta, atualizado from inscricoes order by atualizado, matricula`,
+    sql`select matricula, ano from estudantes`,
   ]);
+  const ESTUDANTES = Object.fromEntries(est.map((x) => [x.matricula, { y: Number(x.ano) }]));
+  if (!est.length) return { erro: "A tabela de estudantes está vazia. Rode o estudantes.sql no SQL Editor do Neon." };
   if (!freq.length) return { erro: "A tabela de prioridade e frequência está vazia. Rode o frequencia.sql no SQL Editor do Neon." };
   const F = Object.fromEntries(freq.map((x) => [x.matricula, { p: !!x.prioritario, f: Number(x.frequencia) || 0 }]));
 
@@ -124,12 +127,14 @@ async function validar(sql) {
 }
 
 async function csv(sql, res) {
-  const rows = await sql`select matricula, componente, opcoes, status, oferta, rodada from inscricoes order by matricula, componente`;
+  const rows = await sql`
+    select i.matricula, e.nome, e.ano, i.componente, i.opcoes, i.status, i.oferta, i.rodada
+    from inscricoes i left join estudantes e on e.matricula = i.matricula
+    order by e.nome, i.componente`;
   const esc = (v) => (/[;"\n]/.test(String(v)) ? '"' + String(v).replace(/"/g, '""') + '"' : String(v));
   const L = ["matricula;nome;ano;componente;opcoes;status;oferta;rodada"];
   for (const r of rows) {
-    const e = ESTUDANTES[r.matricula] || { n: "", y: "" };
-    L.push([r.matricula, e.n, e.y, r.componente, r.opcoes.join(" > "), r.status, r.oferta || "", r.rodada].map(esc).join(";"));
+    L.push([r.matricula, r.nome || "", r.ano || "", r.componente, r.opcoes.join(" > "), r.status, r.oferta || "", r.rodada].map(esc).join(";"));
   }
   res.setHeader("Content-Type", "text/csv; charset=utf-8");
   res.setHeader("Content-Disposition", 'attachment; filename="inscricoes.csv"');

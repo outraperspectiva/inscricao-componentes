@@ -11,7 +11,7 @@ Aplicativo web (mobile, alto contraste) para estudantes se inscreverem nas compo
 | PI — Projeto Integrador | 8 | 22 |
 | OFTEC — Oficinas Técnicas | 6 | 30 (OFTEC 01 reservada para ingressantes) |
 
-As ofertas e vagas ficam em `lib/dados.js`. A lista de estudantes fica em `lib/estudantes.js`.
+As ofertas e vagas ficam em `lib/dados.js`. Os estudantes (matrícula, nome e ano) ficam na tabela `estudantes` do Postgres.
 
 ## Fluxo
 
@@ -29,7 +29,7 @@ public/logo.png       logo do Instituto Federal
 api/estudante.js      GET  consulta matrícula, status e vagas
 api/inscricao.js      POST envia as escolhas do estudante
 api/coordenacao.js    POST resumo, validar, csv, rodada (exige senha)
-lib/                  dados, estudantes e conexão com o banco
+lib/                  ofertas e conexão com o banco
 schema.sql            tabelas (criadas automaticamente na primeira chamada)
 ```
 
@@ -38,10 +38,13 @@ schema.sql            tabelas (criadas automaticamente na primeira chamada)
 1. Na Vercel, **Add New → Project** e importe este repositório. Framework: **Other**. Não precisa de comando de build.
 2. Na aba **Storage** do projeto, crie um banco **Neon (Postgres)** e conecte ao projeto. A Vercel cria a variável `DATABASE_URL`.
 3. Em **Settings → Environment Variables**, crie `COORD_SENHA` com a senha da coordenação.
-4. Faça o deploy (ou **Redeploy** se o projeto já existia antes das variáveis).
+4. No SQL Editor do Neon, rode `estudantes.sql` e `frequencia.sql`.
+5. Faça o deploy (ou **Redeploy** se o projeto já existia antes das variáveis).
 
 As tabelas são criadas sozinhas no primeiro acesso.
 
-## Dados de prioridade e frequência
+## Estudantes, prioridade e frequência
 
-Ficam na tabela `frequencia` do Postgres (matrícula, prioritário e frequência). Para carregar ou atualizar, rode o `frequencia.sql` no SQL Editor do Neon. O painel da coordenação mostra quantos estudantes estão na tabela e só libera a validação quando ela tem dados.
+Ficam no Postgres, nas tabelas `estudantes` (matrícula, nome e ano) e `frequencia` (matrícula, prioritário e frequência). Para carregar ou atualizar, rode `estudantes.sql` e `frequencia.sql` no SQL Editor do Neon. Os dois podem ser rodados de novo sem duplicar registros. Esses arquivos têm dados pessoais dos estudantes e ficam fora do repositório.
+
+O painel da coordenação mostra quantos estudantes há em cada tabela e só libera a validação quando as duas têm dados.

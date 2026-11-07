@@ -1,5 +1,4 @@
-import { db, rodadaAtual, inscricoesDe } from "../lib/db.js";
-import { ESTUDANTES } from "../lib/estudantes.js";
+import { db, rodadaAtual, inscricoesDe, buscarEstudante } from "../lib/db.js";
 import { COMPONENTES, ofertas, AV, EX } from "../lib/dados.js";
 
 // POST /api/inscricao  { m, escolhas: { BASE: ["BASE 01", "BASE 04", "BASE 02"], ... } }
@@ -7,12 +6,12 @@ export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ erro: "Método não permitido" });
   const body = typeof req.body === "string" ? JSON.parse(req.body || "{}") : req.body || {};
   const m = String(body.m || "").trim();
-  const e = ESTUDANTES[m];
-  if (!e) return res.status(404).json({ erro: "Matrícula não encontrada." });
   const escolhas = body.escolhas || {};
 
   try {
     const sql = await db();
+    const e = await buscarEstudante(sql, m);
+    if (!e) return res.status(404).json({ erro: "Matrícula não encontrada." });
     const [rodada, atual] = await Promise.all([rodadaAtual(sql), inscricoesDe(sql, m)]);
     const jaInscreveu = Object.keys(atual).length > 0;
 
