@@ -17,7 +17,7 @@ As ofertas e vagas ficam em `lib/dados.js`. A lista de estudantes fica em `lib/e
 
 1. O estudante entra com a matrícula e vê o próprio nome.
 2. Em cada componente escolhe 1ª, 2ª e 3ª opção. Ao confirmar, as escolhas ficam com status **avaliação**.
-3. A coordenação entra com a matrícula e a senha, carrega os dados de prioridade e frequência e valida. Cada escolha vira **inscrito** ou **excedido**, pela cota por ano (total de estudantes do ano ÷ número de ofertas, só na 1ª rodada), com prioridade para estudantes prioritários e de maior frequência.
+3. A coordenação entra com a matrícula e a senha e valida. Cada escolha vira **inscrito** ou **excedido**, pela cota por ano (total de estudantes do ano ÷ número de ofertas, só na 1ª rodada), com prioridade para estudantes prioritários e de maior frequência.
 4. A coordenação exibe o arquivo de inscrições (CSV) e pode iniciar uma nova rodada.
 5. Na nova rodada, excedidos se inscrevem de novo só nas componentes pendentes; inscritos emitem o comprovante em PDF.
 
@@ -28,7 +28,7 @@ public/index.html     interface (estudante e coordenação)
 public/logo.png       logo do Instituto Federal
 api/estudante.js      GET  consulta matrícula, status e vagas
 api/inscricao.js      POST envia as escolhas do estudante
-api/coordenacao.js    POST resumo, validar, csv, frequencia, rodada (exige senha)
+api/coordenacao.js    POST resumo, validar, csv, rodada (exige senha)
 lib/                  dados, estudantes e conexão com o banco
 schema.sql            tabelas (criadas automaticamente na primeira chamada)
 ```
@@ -44,10 +44,4 @@ As tabelas são criadas sozinhas no primeiro acesso.
 
 ## Dados de prioridade e frequência
 
-No painel da coordenação, em **Carregar frequência**, cole as colunas da planilha: matrícula, prioritário (SIM ou NÃO) e frequência. Exemplo:
-
-```
-2026101610045;SIM;92,5
-```
-
-Cada novo envio substitui os dados anteriores.
+Ficam na tabela `frequencia` do Postgres (matrícula, prioritário e frequência). Para carregar ou atualizar, rode o `frequencia.sql` no SQL Editor do Neon. O painel da coordenação mostra quantos estudantes estão na tabela e só libera a validação quando ela tem dados.
