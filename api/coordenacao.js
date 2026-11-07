@@ -10,7 +10,7 @@ function senhaOk(senha) {
   return crypto.timingSafeEqual(hash(senha), hash(certa));
 }
 
-// POST /api/coordenacao  { m, senha, acao: "resumo" | "validar" | "csv" | "rodada" | "frequencia", texto? }
+// POST /api/coordenacao  { m, senha, acao: "resumo" | "validar" | "csv" | "rodada" }
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ erro: "Método não permitido" });
   const body = typeof req.body === "string" ? JSON.parse(req.body || "{}") : req.body || {};
@@ -39,10 +39,6 @@ export default async function handler(req, res) {
         await sql`insert into config (chave, valor) values ('rodada', ${atual + 1})
                   on conflict (chave) do update set valor = excluded.valor`;
         return res.status(200).json(await resumo(sql));
-      }
-      case "frequencia": {
-        const r = await frequencia(sql, String(body.texto || ""));
-        return res.status(r.erro ? 400 : 200).json(r);
       }
       default:
         return res.status(400).json({ erro: "Ação desconhecida." });
@@ -78,7 +74,7 @@ async function validar(sql) {
     sql`select matricula, prioritario, frequencia from frequencia`,
     sql`select matricula, componente, opcoes, status, oferta, atualizado from inscricoes order by atualizado, matricula`,
   ]);
-  if (!freq.length) return { erro: "Carregue os dados de prioridade e frequência antes de validar." };
+  if (!freq.length) return { erro: "A tabela de prioridade e frequência está vazia. Rode o frequencia.sql no SQL Editor do Neon." };
   const F = Object.fromEntries(freq.map((x) => [x.matricula, { p: !!x.prioritario, f: Number(x.frequencia) || 0 }]));
 
   // Total de estudantes por ano, para a cota de cada oferta.
@@ -138,27 +134,4 @@ async function csv(sql, res) {
   res.setHeader("Content-Type", "text/csv; charset=utf-8");
   res.setHeader("Content-Disposition", 'attachment; filename="inscricoes.csv"');
   return res.status(200).send("\ufeff" + L.join("\n"));
-}
-
-// Recebe linhas "matrícula; prioritário (SIM/NÃO); frequência", coladas da planilha.
-async function frequencia(sql, texto) {
-  const lin = [];
-  let desconhecidas = 0;
-  for (const l of texto.split(/\r?\n/)) {
-    const p = l.split(/\t|;|\|/).map((s) => s.trim());
-    const m = (p[0] || "").replace(/\D/g, "");
-    if (!m || m.length < 9) continue; // cabeçalho ou linha vazia
-    if (!ESTUDANTES[m]) desconhecidas++;
-    const pr = /^(sim|s|x|1|true|verdadeiro)$/i.test(p[1] || "");
-    const f = parseFloat(String(p[2] || "0").replace("%", "").replace(",", ".")) || 0;
-    lin.push([m, pr, f]);
-  }
-  if (!lin.length) return { erro: "Nenhuma linha válida. Use o formato: matrícula; SIM ou NÃO; frequência.", carregadas: 0 };
-  const col = (i) => lin.map((z) => z[i]);
-  await sql.transaction([
-    sql`delete from frequencia`,
-    sql`insert into frequencia (matricula, prioritario, frequencia)
-        select distinct on (m) m, p, f from unnest(${col(0)}::text[], ${col(1)}::boolean[], ${col(2)}::numeric[]) as u(m, p, f)`,
-  ]);
-  return { carregadas: lin.length, desconhecidas };
 }
